@@ -9,7 +9,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 
@@ -21,7 +20,7 @@ import (
 type Block struct {
 	Index     int
 	Timestamp string
-	BPM       int
+	PII       string
 	Hash      string
 	PrevHash  string
 }
@@ -43,7 +42,7 @@ func main() {
 
 	// create genesis block
 	t := time.Now()
-	genesisBlock := Block{0, t.String(), 0, "", ""}
+	genesisBlock := Block{0, t.String(), "", "", ""}
 	spew.Dump(genesisBlock)
 	Blockchain = append(Blockchain, genesisBlock)
 
@@ -71,19 +70,19 @@ func handleConn(conn net.Conn) {
 
 	defer conn.Close()
 
-	io.WriteString(conn, "Enter a new BPM:")
+	io.WriteString(conn, "Enter a new PII:")
 
 	scanner := bufio.NewScanner(conn)
 
-	// take in BPM from stdin and add it to blockchain after conducting necessary validation
+	// take in PII from stdin and add it to blockchain after conducting necessary validation
 	go func() {
 		for scanner.Scan() {
-			bpm, err := strconv.Atoi(scanner.Text())
+			PII, err := scanner.Text()
 			if err != nil {
 				log.Printf("%v not a number: %v", scanner.Text(), err)
 				continue
 			}
-			newBlock, err := generateBlock(Blockchain[len(Blockchain)-1], bpm)
+			newBlock, err := generateBlock(Blockchain[len(Blockchain)-1], PII)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -94,7 +93,7 @@ func handleConn(conn net.Conn) {
 			}
 
 			bcServer <- Blockchain
-			io.WriteString(conn, "\nEnter a new BPM:")
+			io.WriteString(conn, "\nEnter a new PII:")
 		}
 	}()
 
@@ -146,7 +145,7 @@ func replaceChain(newBlocks []Block) {
 
 // SHA256 hasing
 func calculateHash(block Block) string {
-	record := string(block.Index) + block.Timestamp + string(block.BPM) + block.PrevHash
+	record := string(block.Index) + block.Timestamp + block.PII + block.PrevHash
 	h := sha256.New()
 	h.Write([]byte(record))
 	hashed := h.Sum(nil)
@@ -154,7 +153,7 @@ func calculateHash(block Block) string {
 }
 
 // create a new block using previous block's hash
-func generateBlock(oldBlock Block, BPM int) (Block, error) {
+func generateBlock(oldBlock Block, PII string) (Block, error) {
 
 	var newBlock Block
 
@@ -162,7 +161,7 @@ func generateBlock(oldBlock Block, BPM int) (Block, error) {
 
 	newBlock.Index = oldBlock.Index + 1
 	newBlock.Timestamp = t.String()
-	newBlock.BPM = BPM
+	newBlock.PII = PII
 	newBlock.PrevHash = oldBlock.Hash
 	newBlock.Hash = calculateHash(newBlock)
 
