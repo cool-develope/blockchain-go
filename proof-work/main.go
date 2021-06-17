@@ -162,6 +162,6 @@ func main() {
 		Blockchain = append(Blockchain, genesisBlock)
 		mutex.Unlock()
 	}()
-	log.Fatal(run())
 
+	log.Fatal(run())
 }
